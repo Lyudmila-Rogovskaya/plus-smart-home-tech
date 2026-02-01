@@ -26,8 +26,8 @@ public class AvroMapper {
         } else if (sensorEvent instanceof LightSensorEvent) {
             LightSensorEvent event = (LightSensorEvent) sensorEvent;
             LightSensorAvro lightSensor = LightSensorAvro.newBuilder()
-                    .setLinkQuality(event.getLinkQuality())
-                    .setLuminosity(event.getLuminosity())
+                    .setLinkQuality(event.getLinkQuality() != null ? event.getLinkQuality() : 0)
+                    .setLuminosity(event.getLuminosity() != null ? event.getLuminosity() : 0)
                     .build();
             builder.setPayload(lightSensor);
         } else if (sensorEvent instanceof MotionSensorEvent) {
@@ -102,9 +102,11 @@ public class AvroMapper {
     }
 
     private ScenarioConditionAvro mapCondition(ScenarioConditionModel condition) {
-        Object value;
+        Object value = null;
         if (condition.getType() == ConditionTypeModel.MOTION || condition.getType() == ConditionTypeModel.SWITCH) {
-            value = condition.getValue() != 0;
+            if (condition.getValue() != null) {
+                value = condition.getValue() != 0;
+            }
         } else {
             value = condition.getValue();
         }
