@@ -65,7 +65,7 @@ public class AvroMapper {
             DeviceAddedEventModel event = (DeviceAddedEventModel) hubEvent;
             DeviceAddedEventAvro deviceAdded = DeviceAddedEventAvro.newBuilder()
                     .setId(event.getId())
-                    .setType(mapDeviceType(event.getDeviceType()))
+                    .setType(DeviceTypeAvro.valueOf(event.getDeviceType().name()))
                     .build();
             builder.setPayload(deviceAdded);
         } else if (hubEvent instanceof DeviceRemovedEventModel) {
@@ -97,26 +97,17 @@ public class AvroMapper {
         return builder.build();
     }
 
-    private DeviceTypeAvro mapDeviceType(DeviceTypeModel type) {
-        return DeviceTypeAvro.valueOf(type.name());
-    }
-
     private ScenarioConditionAvro mapCondition(ScenarioConditionModel condition) {
-        Object value = null;
-        if (condition.getType() == ConditionTypeModel.MOTION || condition.getType() == ConditionTypeModel.SWITCH) {
-            if (condition.getValue() != null) {
-                value = condition.getValue() != 0;
-            }
-        } else {
-            value = condition.getValue();
-        }
-
-        return ScenarioConditionAvro.newBuilder()
+        ScenarioConditionAvro.Builder builder = ScenarioConditionAvro.newBuilder()
                 .setSensorId(condition.getSensorId())
                 .setType(ConditionTypeAvro.valueOf(condition.getType().name()))
-                .setOperation(ConditionOperationAvro.valueOf(condition.getOperation().name()))
-                .setValue(value)
-                .build();
+                .setOperation(ConditionOperationAvro.valueOf(condition.getOperation().name()));
+        if (condition.getType() == ConditionTypeModel.MOTION || condition.getType() == ConditionTypeModel.SWITCH) {
+            builder.setValue(condition.getValue() != 0);
+        } else {
+            builder.setValue(condition.getValue());
+        }
+        return builder.build();
     }
 
     private DeviceActionAvro mapAction(DeviceActionModel action) {

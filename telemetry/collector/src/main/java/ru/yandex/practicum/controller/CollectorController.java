@@ -25,7 +25,7 @@ public class CollectorController {
             kafkaProducerService.sendSensorEvent(event);
         } catch (Exception e) {
             log.error("Failed to process sensor event: {}", event, e);
-            throw e;
+            throw new RuntimeException("Failed to process sensor event", e);
         }
     }
 
@@ -37,7 +37,7 @@ public class CollectorController {
             kafkaProducerService.sendHubEvent(event);
         } catch (Exception e) {
             log.error("Failed to process hub event: {}", event, e);
-            throw e;
+            throw new RuntimeException("Failed to process hub event", e);
         }
     }
 
