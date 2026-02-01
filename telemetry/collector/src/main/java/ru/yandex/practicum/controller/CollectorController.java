@@ -1,4 +1,4 @@
-package ru.yandex.practicum.controller;
+•	package ru.yandex.practicum.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +21,24 @@ public class CollectorController {
     @ResponseStatus(HttpStatus.OK)
     public void collectSensorEvent(@Valid @RequestBody SensorEventModel event) {
         log.info("Received sensor event: {}", event);
-        kafkaProducerService.sendSensorEvent(event);
+        try {
+            kafkaProducerService.sendSensorEvent(event);
+        } catch (Exception e) {
+            log.error("Failed to process sensor event: {}", event, e);
+            throw e;
+        }
     }
 
     @PostMapping("/hubs")
     @ResponseStatus(HttpStatus.OK)
     public void collectHubEvent(@Valid @RequestBody HubEventModel event) {
         log.info("Received hub event: {}", event);
-        kafkaProducerService.sendHubEvent(event);
+        try {
+            kafkaProducerService.sendHubEvent(event);
+        } catch (Exception e) {
+            log.error("Failed to process hub event: {}", event, e);
+            throw e;
+        }
     }
 
 }
