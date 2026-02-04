@@ -18,3 +18,4 @@ logging:
   level:
     ru.yandex.practicum: DEBUG
     org.apache.kafka: WARN
+    org.springframework.web: DEBUG
