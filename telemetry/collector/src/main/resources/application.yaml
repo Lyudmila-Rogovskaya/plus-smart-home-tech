@@ -1,24 +1,19 @@
-server:
-  port: 8080
+grpc:
+  server:
+    port: 8080
 
 spring:
-  application:
-    name: collector
-
   kafka:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-    properties:
-      schema.registry.url: http://localhost:8081
-      specific.avro.reader: true
-      auto.register.schemas: true
+      properties:
+        schema.registry.url: "http://localhost:8081"
+        auto.register.schemas: "true"
 
 logging:
   level:
-    ru.yandex.practicum: DEBUG
-    org.apache.kafka: DEBUG
+    ru.yandex.practicum.collector: DEBUG
     org.springframework.kafka: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.boot.autoconfigure: DEBUG
+    org.apache.kafka: INFO
