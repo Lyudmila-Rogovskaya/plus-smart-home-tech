@@ -29,8 +29,8 @@ public class AvroMapper {
             case LIGHT_SENSOR_EVENT:
                 LightSensorEvent lightEvent = (LightSensorEvent) sensorEvent;
                 LightSensorAvro lightSensor = LightSensorAvro.newBuilder()
-                        .setLinkQuality(lightEvent.getLinkQuality() != null ? lightEvent.getLinkQuality() : 0)
-                        .setLuminosity(lightEvent.getLuminosity() != null ? lightEvent.getLuminosity() : 0)
+                        .setLinkQuality(lightEvent.getLinkQuality())
+                        .setLuminosity(lightEvent.getLuminosity())
                         .build();
                 builder.setPayload(lightSensor);
                 break;

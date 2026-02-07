@@ -2,8 +2,10 @@ package ru.yandex.practicum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
+import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
@@ -11,60 +13,53 @@ import ru.yandex.practicum.mapper.AvroMapper;
 import ru.yandex.practicum.model.HubEventModel;
 import ru.yandex.practicum.model.SensorEventModel;
 
-import java.util.concurrent.CompletableFuture;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class KafkaProducerService {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final Producer<String, SpecificRecordBase> kafkaProducer;
     private final AvroMapper avroMapper;
 
-    private static final String SENSORS_TOPIC = "telemetry.sensors.v1";
-    private static final String HUBS_TOPIC = "telemetry.hubs.v1";
+    @Value("${kafka.topic.sensor}")
+    private String sensorsTopic;
+
+    @Value("${kafka.topic.hub}")
+    private String hubsTopic;
 
     public void sendSensorEvent(SensorEventModel sensorEvent) {
         try {
             SensorEventAvro avroEvent = avroMapper.toAvro(sensorEvent);
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(SENSORS_TOPIC, sensorEvent.getHubId(), avroEvent);
+            ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
+                    sensorsTopic,
+                    null,
+                    sensorEvent.getTimestamp().toEpochMilli(),
+                    avroEvent.getHubId(),
+                    avroEvent);
 
-            future.whenComplete((result, ex) -> {
-                if (ex == null) {
-                    log.debug("Sensor event sent successfully to Kafka. Topic: {}, Partition: {}, Offset: {}",
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                } else {
-                    log.error("Failed to send sensor event to Kafka: {}", sensorEvent, ex);
-                }
-            });
+            kafkaProducer.send(record);
+            log.info("Отправили сенсорное событие в Kafka: {}", record);
         } catch (Exception e) {
-            log.error("Failed to process sensor event: {}", sensorEvent, e);
-            throw new RuntimeException("Failed to send sensor event to Kafka", e);
+            log.error("Ошибка при отправке сенсорного события в Kafka", e);
+            throw new RuntimeException("Ошибка при отправке сенсорного события в Kafka", e);
         }
     }
 
     public void sendHubEvent(HubEventModel hubEvent) {
         try {
             HubEventAvro avroEvent = avroMapper.toAvro(hubEvent);
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(HUBS_TOPIC, hubEvent.getHubId(), avroEvent);
+            ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
+                    hubsTopic,
+                    null,
+                    hubEvent.getTimestamp().toEpochMilli(),
+                    avroEvent.getHubId(),
+                    avroEvent);
 
-            future.whenComplete((result, ex) -> {
-                if (ex == null) {
-                    log.debug("Hub event sent successfully to Kafka. Topic: {}, Partition: {}, Offset: {}",
-                            result.getRecordMetadata().topic(),
-                            result.getRecordMetadata().partition(),
-                            result.getRecordMetadata().offset());
-                } else {
-                    log.error("Failed to send hub event to Kafka: {}", hubEvent, ex);
-                }
-            });
+            kafkaProducer.send(record);
+            log.info("Отправили событие хаба в Kafka: {}", record);
         } catch (Exception e) {
-            log.error("Failed to process hub event: {}", hubEvent, e);
-            throw new RuntimeException("Failed to send hub event to Kafka", e);
+            log.error("Ошибка при отправке события хаба в Kafka", e);
+            throw new RuntimeException("Ошибка при отправке события хаба в Kafka", e);
         }
     }
 
