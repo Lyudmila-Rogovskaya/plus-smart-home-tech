@@ -1,7 +1,7 @@
-spring:
-  application:
-    name: collector
+server:
+  port: 8081
 
+spring:
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -10,3 +10,11 @@ spring:
       properties:
         schema.registry.url: "http://localhost:8081"
         auto.register.schemas: "true"
+    properties:
+      schema.registry.url: "http://localhost:8081"
+
+logging:
+  level:
+    ru.yandex.practicum.collector: DEBUG
+    org.springframework.kafka: DEBUG
+    org.apache.kafka: INFO
