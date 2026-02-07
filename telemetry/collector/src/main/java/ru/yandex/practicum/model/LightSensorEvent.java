@@ -1,6 +1,7 @@
 package ru.yandex.practicum.model;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -11,7 +12,10 @@ import lombok.ToString;
 @JsonTypeName("LIGHT_SENSOR_EVENT")
 public class LightSensorEvent extends SensorEventModel {
 
+    @NotNull
     private Integer linkQuality;
+
+    @NotNull
     private Integer luminosity;
 
     @Override
