@@ -2,18 +2,18 @@
 protocol SensorEventProtocol {
 
 	record ClimateSensorAvro {
-		int temperature_c;
+		int temperatureC;
 		int humidity;
-		int co2_level;
+		int co2Level;
 	}
 
 	record LightSensorAvro {
-		int link_quality;
+		int linkQuality;
 		int luminosity;
 	}
 
 	record MotionSensorAvro {
-		int link_quality;
+		int linkQuality;
 		boolean motion;
 		int voltage;
 	}
@@ -23,8 +23,8 @@ protocol SensorEventProtocol {
 	}
 
 	record TemperatureSensorAvro {
-		int temperature_c;
-		int temperature_f;
+		int temperatureC;
+		int temperatureF;
 	}
 
 	record SensorEventAvro {
