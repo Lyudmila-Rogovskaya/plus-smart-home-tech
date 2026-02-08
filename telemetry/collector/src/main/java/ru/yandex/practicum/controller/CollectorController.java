@@ -2,11 +2,13 @@ package ru.yandex.practicum.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.model.HubEventModel;
 import ru.yandex.practicum.model.SensorEventModel;
-import ru.yandex.practicum.service.KafkaProducerService;
+import ru.yandex.practicum.service.EventProcessingService;
 
 import javax.validation.Valid;
 
@@ -16,33 +18,23 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class CollectorController {
 
-    private final KafkaProducerService kafkaProducerService;
+    private final EventProcessingService eventProcessingService;
 
     @PostMapping("/sensors")
-    @ResponseStatus(HttpStatus.OK)
     public void collectSensorEvent(@Valid @RequestBody SensorEventModel event) {
         log.info("Received sensor event type: {}, hubId: {}, id: {}",
                 event.getType(), event.getHubId(), event.getId());
-        try {
-            kafkaProducerService.sendSensorEvent(event);
-            log.debug("Successfully processed sensor event: {}", event);
-        } catch (Exception e) {
-            log.error("Failed to process sensor event: {}", event, e);
-            throw new RuntimeException("Failed to process sensor event: " + e.getMessage(), e);
-        }
+
+        eventProcessingService.processSensorEvent(event);
+        log.debug("Successfully processed sensor event: {}", event);
     }
 
     @PostMapping("/hubs")
-    @ResponseStatus(HttpStatus.OK)
     public void collectHubEvent(@Valid @RequestBody HubEventModel event) {
         log.info("Received hub event type: {}, hubId: {}", event.getType(), event.getHubId());
-        try {
-            kafkaProducerService.sendHubEvent(event);
-            log.debug("Successfully processed hub event: {}", event);
-        } catch (Exception e) {
-            log.error("Failed to process hub event: {}", event, e);
-            throw new RuntimeException("Failed to process hub event: " + e.getMessage(), e);
-        }
+
+        eventProcessingService.processHubEvent(event);
+        log.debug("Successfully processed hub event: {}", event);
     }
 
 }

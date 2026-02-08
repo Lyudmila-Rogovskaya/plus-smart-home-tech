@@ -1,15 +1,20 @@
 package ru.yandex.practicum.mapper;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.*;
 
 import java.util.stream.Collectors;
 
-@Component
 public class AvroMapper {
 
-    public SensorEventAvro toAvro(SensorEventModel sensorEvent) {
+    private AvroMapper() {
+    }
+
+    public static SensorEventAvro toAvro(SensorEventModel sensorEvent) {
+        if (sensorEvent == null || sensorEvent.getType() == null) {
+            throw new IllegalArgumentException("Sensor event cannot be null and must have a type");
+        }
+
         SensorEventAvro.Builder builder = SensorEventAvro.newBuilder()
                 .setId(sensorEvent.getId())
                 .setHubId(sensorEvent.getHubId())
@@ -69,7 +74,11 @@ public class AvroMapper {
         return builder.build();
     }
 
-    public HubEventAvro toAvro(HubEventModel hubEvent) {
+    public static HubEventAvro toAvro(HubEventModel hubEvent) {
+        if (hubEvent == null || hubEvent.getType() == null) {
+            throw new IllegalArgumentException("Hub event cannot be null and must have a type");
+        }
+
         HubEventAvro.Builder builder = HubEventAvro.newBuilder()
                 .setHubId(hubEvent.getHubId())
                 .setTimestamp(hubEvent.getTimestamp().toEpochMilli());
@@ -97,10 +106,10 @@ public class AvroMapper {
                 ScenarioAddedEventAvro scenarioAdded = ScenarioAddedEventAvro.newBuilder()
                         .setName(scenarioAddedEvent.getName())
                         .setConditions(scenarioAddedEvent.getConditions().stream()
-                                .map(this::mapCondition)
+                                .map(AvroMapper::mapCondition)
                                 .collect(Collectors.toList()))
                         .setActions(scenarioAddedEvent.getActions().stream()
-                                .map(this::mapAction)
+                                .map(AvroMapper::mapAction)
                                 .collect(Collectors.toList()))
                         .build();
                 builder.setPayload(scenarioAdded);
@@ -121,7 +130,7 @@ public class AvroMapper {
         return builder.build();
     }
 
-    private ScenarioConditionAvro mapCondition(ScenarioConditionModel condition) {
+    private static ScenarioConditionAvro mapCondition(ScenarioConditionModel condition) {
         ScenarioConditionAvro.Builder builder = ScenarioConditionAvro.newBuilder()
                 .setSensorId(condition.getSensorId())
                 .setType(ConditionTypeAvro.valueOf(condition.getType().name()))
@@ -134,7 +143,7 @@ public class AvroMapper {
         return builder.build();
     }
 
-    private DeviceActionAvro mapAction(DeviceActionModel action) {
+    private static DeviceActionAvro mapAction(DeviceActionModel action) {
         DeviceActionAvro.Builder builder = DeviceActionAvro.newBuilder()
                 .setSensorId(action.getSensorId())
                 .setType(ActionTypeAvro.valueOf(action.getType().name()));
