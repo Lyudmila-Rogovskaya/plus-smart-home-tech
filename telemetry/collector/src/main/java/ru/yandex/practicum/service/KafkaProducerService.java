@@ -14,10 +14,8 @@ import ru.yandex.practicum.mapper.AvroMapper;
 import ru.yandex.practicum.model.HubEventModel;
 import ru.yandex.practicum.model.SensorEventModel;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
@@ -50,19 +48,8 @@ public class KafkaProducerService {
             log.info("Отправили сенсорное событие в Kafka. Топик: {}, партиция: {}, offset: {}, hubId: {}",
                     metadata.topic(), metadata.partition(), metadata.offset(), avroEvent.getHubId());
 
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Отправка сенсорного события была прервана", e);
-            throw new RuntimeException("Отправка сенсорного события была прервана", e);
-        } catch (ExecutionException e) {
-            log.error("Ошибка при отправке сенсорного события в Kafka", e.getCause());
-            throw new RuntimeException("Ошибка при отправке сенсорного события в Kafka: " + e.getCause().getMessage(),
-                    e.getCause());
-        } catch (TimeoutException e) {
-            log.error("Таймаут при отправке сенсорного события в Kafka", e);
-            throw new RuntimeException("Таймаут при отправке сенсорного события в Kafka", e);
+        } catch (Exception e) {
+            log.error("Ошибка при отправке сенсорного события в Kafka", e);
         }
     }
 
@@ -84,19 +71,8 @@ public class KafkaProducerService {
             log.info("Отправили событие хаба в Kafka. Топик: {}, партиция: {}, offset: {}, hubId: {}",
                     metadata.topic(), metadata.partition(), metadata.offset(), avroEvent.getHubId());
 
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Отправка события хаба была прервана", e);
-            throw new RuntimeException("Отправка события хаба была прервана", e);
-        } catch (ExecutionException e) {
-            log.error("Ошибка при отправке события хаба в Kafka", e.getCause());
-            throw new RuntimeException("Ошибка при отправке события хаба в Kafka: " + e.getCause().getMessage(),
-                    e.getCause());
-        } catch (TimeoutException e) {
-            log.error("Таймаут при отправке события хаба в Kafka", e);
-            throw new RuntimeException("Таймаут при отправке события хаба в Kafka", e);
+        } catch (Exception e) {
+            log.error("Ошибка при отправке события хаба в Kafka", e);
         }
     }
 
