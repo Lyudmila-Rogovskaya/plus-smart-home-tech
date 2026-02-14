@@ -1,0 +1,30 @@
+package ru.yandex.practicum.model;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import javax.validation.constraints.NotNull;
+
+@Getter
+@Setter
+@ToString(callSuper = true)
+@JsonTypeName("MOTION_SENSOR_EVENT")
+public class MotionSensorEvent extends SensorEventModel {
+
+    @NotNull
+    private Integer linkQuality;
+
+    @NotNull
+    private Boolean motion;
+
+    @NotNull
+    private Integer voltage;
+
+    @Override
+    public SensorEventType getType() {
+        return SensorEventType.MOTION_SENSOR_EVENT;
+    }
+
+}

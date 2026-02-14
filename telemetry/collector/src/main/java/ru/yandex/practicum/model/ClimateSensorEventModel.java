@@ -1,0 +1,30 @@
+package ru.yandex.practicum.model;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import javax.validation.constraints.NotNull;
+
+@Getter
+@Setter
+@ToString(callSuper = true)
+@JsonTypeName("CLIMATE_SENSOR_EVENT")
+public class ClimateSensorEventModel extends SensorEventModel {
+
+    @NotNull
+    private Integer temperatureC;
+
+    @NotNull
+    private Integer humidity;
+
+    @NotNull
+    private Integer co2Level;
+
+    @Override
+    public SensorEventType getType() {
+        return SensorEventType.CLIMATE_SENSOR_EVENT;
+    }
+
+}
