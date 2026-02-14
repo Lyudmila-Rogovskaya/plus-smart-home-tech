@@ -1,6 +1,5 @@
 package ru.yandex.practicum.mapper;
 
-import com.google.protobuf.Timestamp;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.model.*;
