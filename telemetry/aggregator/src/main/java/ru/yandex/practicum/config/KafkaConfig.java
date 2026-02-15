@@ -19,11 +19,6 @@ import java.util.Properties;
 @Configuration
 public class KafkaConfig {
 
-//    @Bean
-//    public KafkaProperties kafkaProperties() {
-//        return new KafkaProperties();
-//    }
-
     @Bean
     public KafkaConsumer<String, SensorEventAvro> kafkaConsumer(KafkaProperties properties) {
         Properties props = new Properties();
