@@ -15,12 +15,13 @@ import ru.yandex.practicum.analyzer.entity.Condition;
 import ru.yandex.practicum.analyzer.entity.Scenario;
 import ru.yandex.practicum.analyzer.entity.ScenarioAction;
 import ru.yandex.practicum.analyzer.entity.ScenarioCondition;
+import ru.yandex.practicum.analyzer.entity.enums.ActionType;
 import ru.yandex.practicum.analyzer.repository.ScenarioActionRepository;
 import ru.yandex.practicum.analyzer.repository.ScenarioConditionRepository;
 import ru.yandex.practicum.analyzer.repository.ScenarioRepository;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
-import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
+import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.time.Duration;
@@ -88,7 +89,7 @@ public class SnapshotProcessor {
                 }
             }
             if (allMet) {
-                executeActions(scenario, hubId, snapshot.getTimestamp());
+                executeActions(scenario, hubId);
             }
         }
     }
@@ -138,20 +139,22 @@ public class SnapshotProcessor {
         };
     }
 
-    private void executeActions(Scenario scenario, String hubId, Instant timestamp) {
+    private void executeActions(Scenario scenario, String hubId) {
         List<ScenarioAction> actions = scenarioActionRepository.findByScenarioId(scenario.getId());
+        Instant now = Instant.now();
+
         for (ScenarioAction sa : actions) {
             DeviceActionRequest request = DeviceActionRequest.newBuilder()
                     .setHubId(hubId)
                     .setScenarioName(scenario.getName())
                     .setAction(DeviceActionProto.newBuilder()
                             .setSensorId(sa.getSensor().getId())
-                            .setTypeValue(sa.getAction().getType().ordinal())
+                            .setTypeValue(getActionTypeValue(sa.getAction().getType()))
                             .setValue(sa.getAction().getValue() != null ? sa.getAction().getValue() : 0)
                             .build())
                     .setTimestamp(Timestamp.newBuilder()
-                            .setSeconds(timestamp.getEpochSecond())
-                            .setNanos(timestamp.getNano())
+                            .setSeconds(now.getEpochSecond())
+                            .setNanos(now.getNano())
                             .build())
                     .build();
             try {
@@ -161,6 +164,15 @@ public class SnapshotProcessor {
                 log.error("Failed to send action to hub router", e);
             }
         }
+    }
+
+    private int getActionTypeValue(ActionType actionType) {
+        return switch (actionType) {
+            case ACTIVATE -> 0;
+            case DEACTIVATE -> 1;
+            case INVERSE -> 2;
+            case SET_VALUE -> 3;
+        };
     }
 
 }

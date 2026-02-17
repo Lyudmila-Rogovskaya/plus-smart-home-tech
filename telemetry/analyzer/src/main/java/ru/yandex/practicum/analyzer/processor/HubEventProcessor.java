@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.analyzer.entity.*;
 import ru.yandex.practicum.analyzer.entity.enums.ActionType;
 import ru.yandex.practicum.analyzer.entity.enums.ConditionOperation;
@@ -17,6 +18,7 @@ import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -49,12 +51,25 @@ public class HubEventProcessor implements Runnable {
                         log.error("Error processing hub event", e);
                     }
                 }
+                if (!records.isEmpty()) {
+                    try {
+                        consumer.commitSync();
+                        log.debug("Offsets committed after processing {} records", records.count());
+                    } catch (Exception e) {
+                        log.error("Failed to commit offsets", e);
+                    }
+                }
             }
         } catch (WakeupException e) {
             log.info("HubEventProcessor received wakeup signal");
         } catch (Exception e) {
             log.error("Error in HubEventProcessor loop", e);
         } finally {
+            try {
+                consumer.commitSync();
+            } catch (Exception e) {
+                log.error("Error during final commit", e);
+            }
             consumer.close();
             log.info("HubEventProcessor closed");
         }
@@ -71,27 +86,50 @@ public class HubEventProcessor implements Runnable {
     }
 
     private void handleDeviceAdded(String hubId, DeviceAddedEventAvro deviceAdded) {
-        Sensor sensor = new Sensor(deviceAdded.getId(), hubId);
-        sensorRepository.save(sensor);
-        log.info("Added sensor {} to hub {}", sensor.getId(), hubId);
+        String sensorId = deviceAdded.getId();
+
+        Optional<Sensor> existingSensor = sensorRepository.findById(sensorId);
+        if (existingSensor.isPresent()) {
+            Sensor sensor = existingSensor.get();
+            if (sensor.getHubId().equals(hubId)) {
+                log.debug("Sensor {} already exists for hub {}, ignoring duplicate event", sensorId, hubId);
+                return;
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("Sensor %s already exists but belongs to hub %s, cannot add to hub %s",
+                                sensorId, sensor.getHubId(), hubId));
+            }
+        }
+
+        Sensor newSensor = new Sensor(sensorId, hubId);
+        sensorRepository.save(newSensor);
+        log.info("Added sensor {} to hub {}", sensorId, hubId);
     }
 
     private void handleDeviceRemoved(String hubId, DeviceRemovedEventAvro deviceRemoved) {
-        sensorRepository.findById(deviceRemoved.getId()).ifPresent(sensor -> {
-            if (!sensor.getHubId().equals(hubId)) {
-                log.warn("Sensor {} belongs to different hub {}, ignoring removal", deviceRemoved.getId(), sensor.getHubId());
-                return;
-            }
-            sensorRepository.delete(sensor);
-            log.info("Removed sensor {} from hub {}", deviceRemoved.getId(), hubId);
-        });
+        Optional<Sensor> sensorOpt = sensorRepository.findById(deviceRemoved.getId());
+        if (sensorOpt.isEmpty()) {
+            log.warn("Sensor {} not found, ignoring removal", deviceRemoved.getId());
+            return;
+        }
+
+        Sensor sensor = sensorOpt.get();
+        if (!sensor.getHubId().equals(hubId)) {
+            log.warn("Sensor {} belongs to different hub {}, ignoring removal", deviceRemoved.getId(), sensor.getHubId());
+            return;
+        }
+
+        sensorRepository.delete(sensor);
+        log.info("Removed sensor {} from hub {}", deviceRemoved.getId(), hubId);
     }
 
+    @Transactional
     private void handleScenarioAdded(String hubId, ScenarioAddedEventAvro scenarioAdded) {
-        scenarioRepository.findByHubIdAndName(hubId, scenarioAdded.getName()).ifPresent(scenario -> {
-            scenarioRepository.delete(scenario);
-            scenarioRepository.flush();
-        });
+        scenarioRepository.findByHubIdAndName(hubId, scenarioAdded.getName())
+                .ifPresent(existing -> {
+                    scenarioRepository.delete(existing);
+                    scenarioRepository.flush();
+                });
 
         Scenario scenario = new Scenario();
         scenario.setHubId(hubId);
@@ -103,13 +141,24 @@ public class HubEventProcessor implements Runnable {
             condition.setType(ConditionType.valueOf(condAvro.getType().name()));
             condition.setOperation(ConditionOperation.valueOf(condAvro.getOperation().name()));
             Object val = condAvro.getValue();
-            if (val instanceof Integer) condition.setValue((Integer) val);
-            else if (val instanceof Boolean) condition.setValue((Boolean) val ? 1 : 0);
-            else condition.setValue(0);
+            if (val instanceof Integer) {
+                condition.setValue((Integer) val);
+            } else if (val instanceof Boolean) {
+                condition.setValue((Boolean) val ? 1 : 0);
+            } else {
+                condition.setValue(0);
+            }
             condition = conditionRepository.save(condition);
 
             Sensor sensor = sensorRepository.findById(condAvro.getSensorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Sensor not found: " + condAvro.getSensorId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Sensor not found: " + condAvro.getSensorId()));
+
+            if (!sensor.getHubId().equals(hubId)) {
+                throw new IllegalArgumentException(
+                        String.format("Sensor %s belongs to hub %s, but scenario is for hub %s",
+                                sensor.getId(), sensor.getHubId(), hubId));
+            }
 
             ScenarioCondition sc = new ScenarioCondition();
             sc.setScenario(scenario);
@@ -126,7 +175,14 @@ public class HubEventProcessor implements Runnable {
             action = actionRepository.save(action);
 
             Sensor sensor = sensorRepository.findById(actAvro.getSensorId())
-                    .orElseThrow(() -> new IllegalArgumentException("Sensor not found: " + actAvro.getSensorId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Sensor not found: " + actAvro.getSensorId()));
+
+            if (!sensor.getHubId().equals(hubId)) {
+                throw new IllegalArgumentException(
+                        String.format("Sensor %s belongs to hub %s, but scenario is for hub %s",
+                                sensor.getId(), sensor.getHubId(), hubId));
+            }
 
             ScenarioAction sa = new ScenarioAction();
             sa.setScenario(scenario);
