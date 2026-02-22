@@ -2,10 +2,13 @@ spring:
   application:
     name: collector
   config:
-    import: configserver:http://localhost:8888
+    import: "configserver:"
 
   cloud:
     config:
+      discovery:
+        enabled: true
+        serviceId: config-server
       fail-fast: true
       retry:
         useRandomPolicy: true
