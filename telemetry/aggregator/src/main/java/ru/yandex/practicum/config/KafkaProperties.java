@@ -2,6 +2,7 @@ package ru.yandex.practicum.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import java.util.Map;
 
 @Data
 @ConfigurationProperties(prefix = "kafka")
@@ -9,8 +10,7 @@ public class KafkaProperties {
     private String bootstrapServer;
     private ConsumerConfig consumer = new ConsumerConfig();
     private ProducerConfig producer = new ProducerConfig();
-    private String topicSensors;
-    private String topicSnapshots;
+    private Map<String, String> topics;
 
     @Data
     public static class ConsumerConfig {

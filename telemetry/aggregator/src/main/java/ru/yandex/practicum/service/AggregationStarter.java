@@ -37,11 +37,12 @@ public class AggregationStarter {
     private final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
 
     public void start() {
-        consumer.subscribe(List.of(properties.getTopicSensors()));
+        String sensorsTopic = properties.getTopics().get("sensors");
+        consumer.subscribe(List.of(sensorsTopic));
 
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
-        log.info("Aggregator started, subscribed to {}", properties.getTopicSensors());
+        log.info("Aggregator started, subscribed to {}", sensorsTopic);
 
         try {
             while (true) {
@@ -56,7 +57,7 @@ public class AggregationStarter {
 
                     updatedSnapshot.ifPresent(snapshot -> {
                         ProducerRecord<String, SensorsSnapshotAvro> producerRecord = new ProducerRecord<>(
-                                properties.getTopicSnapshots(),
+                                properties.getTopics().get("snapshots"),
                                 snapshot.getHubId(),
                                 snapshot
                         );
