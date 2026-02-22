@@ -1,0 +1,21 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          searchLocations: classpath:/config/telemetry/
+          addLabelLocations: false
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework.cloud.config: TRACE
+    org.springframework.cloud.config.server: TRACE
+    org.springframework.cloud.config.server.environment: TRACE
