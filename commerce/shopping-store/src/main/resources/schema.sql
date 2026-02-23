@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS shopping_store.products (
     quantity_state VARCHAR(20) NOT NULL,
     product_state VARCHAR(20) NOT NULL,
     product_category VARCHAR(20) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL
+    price DOUBLE PRECISION NOT NULL
 );
