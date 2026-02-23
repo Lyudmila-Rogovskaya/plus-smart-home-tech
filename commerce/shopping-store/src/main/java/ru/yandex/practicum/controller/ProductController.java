@@ -3,11 +3,15 @@ package ru.yandex.practicum.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.ProductCategory;
 import ru.yandex.practicum.dto.ProductDto;
+import ru.yandex.practicum.dto.QuantityState;
 import ru.yandex.practicum.dto.SetProductQuantityStateRequest;
 import ru.yandex.practicum.service.ProductService;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/shopping-store")
@@ -37,14 +41,27 @@ public class ProductController {
         return productService.updateProduct(productDto);
     }
 
-    @PostMapping("/removeProductFromStore")
-    public Boolean removeProductFromStore(@RequestBody String productId) {
+    @PostMapping(value = "/removeProductFromStore", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Boolean removeProductFromStore(@RequestBody UUID productId) {
         return productService.removeProduct(productId);
     }
 
-    @PostMapping("/quantityState")
-    public Boolean setProductQuantityState(@RequestBody SetProductQuantityStateRequest request) {
-        return productService.setQuantityState(request);
+    @PostMapping(value = "/quantityState", consumes = {"application/json", MediaType.ALL_VALUE})
+    public Boolean setProductQuantityState(
+            @RequestBody(required = false) SetProductQuantityStateRequest request,
+            @RequestParam(required = false) UUID productId,
+            @RequestParam(required = false) QuantityState quantityState) {
+
+        if (request != null) {
+            return productService.setQuantityState(request);
+        } else if (productId != null && quantityState != null) {
+            SetProductQuantityStateRequest req = new SetProductQuantityStateRequest();
+            req.setProductId(productId);
+            req.setQuantityState(quantityState);
+            return productService.setQuantityState(req);
+        } else {
+            throw new IllegalArgumentException("Either request body or query parameters (productId, quantityState) must be provided");
+        }
     }
 
 }
