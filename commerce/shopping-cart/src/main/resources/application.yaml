@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: shopping-cart
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analyzer?currentSchema=shopping_cart
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: shopping_cart
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: config-server
+      fail-fast: true
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
+server:
+  port: 0
+
+feign:
+  circuitbreaker:
+    enabled: true
+
+resilience4j.circuitbreaker:
+  instances:
+    warehouse:
+      registerHealthIndicator: true
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 5
+      permittedNumberOfCallsInHalfOpenState: 3
+      automaticTransitionFromOpenToHalfOpenEnabled: true
+      waitDurationInOpenState: 5s
+      failureRateThreshold: 50
+      eventConsumerBufferSize: 10
+
+logging:
+  level:
+    ru.yandex.practicum: DEBUG

@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: warehouse
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analyzer?currentSchema=warehouse
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: warehouse
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: config-server
+      fail-fast: true
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
+server:
+  port: 0
+
+logging:
+  level:
+    ru.yandex.practicum: DEBUG

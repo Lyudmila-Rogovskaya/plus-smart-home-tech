@@ -10,7 +10,9 @@ spring:
     config:
       server:
         native:
-          searchLocations: classpath:/config/telemetry/
+          searchLocations:
+            - classpath:/config/telemetry/
+            - classpath:/config/commerce/
           addLabelLocations: false
 
 eureka:
@@ -21,6 +23,5 @@ eureka:
 logging:
   level:
     root: DEBUG
-    org.springframework.cloud.config: TRACE
-    org.springframework.cloud.config.server: TRACE
+    org.springframework.cloud.config.server: DEBUG
     org.springframework.cloud.config.server.environment: TRACE
