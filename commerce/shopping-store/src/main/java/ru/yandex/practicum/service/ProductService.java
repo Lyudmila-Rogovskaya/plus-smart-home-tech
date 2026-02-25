@@ -29,7 +29,7 @@ public class ProductService {
 
     public ProductDto getProduct(String productId) {
         UUID id = UUID.fromString(productId);
-        Product product = productRepository.findByIdAndProductState(id, ProductState.ACTIVE)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + productId));
         return productMapper.toDto(product);
     }
@@ -37,7 +37,6 @@ public class ProductService {
     @Transactional
     public ProductDto createProduct(ProductDto productDto) {
         Product product = productMapper.toEntity(productDto);
-        product.setProductState(ProductState.ACTIVE);
         if (product.getQuantityState() == null) {
             product.setQuantityState(ru.yandex.practicum.dto.QuantityState.ENDED);
         }
