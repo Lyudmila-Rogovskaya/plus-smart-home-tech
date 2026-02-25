@@ -104,6 +104,15 @@ public class ShoppingCartService {
                 .orElseThrow(() -> new NoProductsInShoppingCartException("Product not found in cart"));
         item.setQuantity(request.getNewQuantity());
         cartRepository.save(cart);
+
+        ShoppingCartDto dtoForCheck = cartMapper.toDto(cart);
+        try {
+            warehouseClient.checkProductQuantityEnoughForShoppingCart(dtoForCheck);
+        } catch (feign.FeignException e) {
+            log.error("Warehouse check failed after quantity change", e);
+            throw new IllegalArgumentException("Not enough products in warehouse", e);
+        }
+
         return cartMapper.toDto(cart);
     }
 

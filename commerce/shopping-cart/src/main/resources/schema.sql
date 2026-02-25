@@ -2,7 +2,7 @@ CREATE SCHEMA IF NOT EXISTS shopping_cart;
 
 CREATE TABLE IF NOT EXISTS shopping_cart.carts (
     id UUID PRIMARY KEY,
-    username VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(255) NOT NULL,
     active BOOLEAN NOT NULL
 );
 

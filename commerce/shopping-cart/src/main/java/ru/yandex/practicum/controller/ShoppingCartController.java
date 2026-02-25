@@ -9,6 +9,7 @@ import ru.yandex.practicum.service.ShoppingCartService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/shopping-cart")
@@ -40,7 +41,7 @@ public class ShoppingCartController {
 
     @PostMapping("/change-quantity")
     public ShoppingCartDto changeProductQuantity(@RequestParam String username,
-                                                 @RequestBody ChangeProductQuantityRequest request) {
+                                                 @Valid @RequestBody ChangeProductQuantityRequest request) {
         return cartService.changeQuantity(username, request);
     }
 

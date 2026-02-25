@@ -10,6 +10,7 @@ import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.dto.QuantityState;
 import ru.yandex.practicum.dto.SetProductQuantityStateRequest;
 import ru.yandex.practicum.service.ProductService;
+import jakarta.validation.Valid;
 
 import java.util.UUID;
 
@@ -32,12 +33,12 @@ public class ProductController {
     }
 
     @PutMapping
-    public ProductDto createNewProduct(@RequestBody ProductDto productDto) {
+    public ProductDto createNewProduct(@Valid @RequestBody ProductDto productDto) {
         return productService.createProduct(productDto);
     }
 
     @PostMapping
-    public ProductDto updateProduct(@RequestBody ProductDto productDto) {
+    public ProductDto updateProduct(@Valid @RequestBody ProductDto productDto) {
         return productService.updateProduct(productDto);
     }
 

@@ -1,7 +1,16 @@
 package ru.yandex.practicum.exception;
 
-public class ProductInShoppingCartLowQuantityInWarehouse extends RuntimeException {
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+import ru.yandex.practicum.errors.HttpStatusProvide;
+
+@Getter
+public class ProductInShoppingCartLowQuantityInWarehouse extends RuntimeException implements HttpStatusProvide {
+
+    private final HttpStatus status = HttpStatus.BAD_REQUEST;
+
     public ProductInShoppingCartLowQuantityInWarehouse(String message) {
         super(message);
     }
+
 }
