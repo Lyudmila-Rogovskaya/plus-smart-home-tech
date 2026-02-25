@@ -23,7 +23,7 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     public Page<ProductDto> getProducts(ProductCategory category, Pageable pageable) {
-        return productRepository.findByProductCategoryAndProductState(category, ProductState.ACTIVE, pageable)
+        return productRepository.findByProductCategory(category, pageable)
                 .map(productMapper::toDto);
     }
 
