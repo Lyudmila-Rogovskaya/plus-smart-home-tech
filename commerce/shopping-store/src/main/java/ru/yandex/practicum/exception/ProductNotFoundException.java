@@ -3,6 +3,7 @@ package ru.yandex.practicum.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import ru.yandex.practicum.errors.HttpStatusProvide;
+
 import java.util.UUID;
 
 @Getter

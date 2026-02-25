@@ -1,5 +1,6 @@
 package ru.yandex.practicum.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,7 +11,6 @@ import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.dto.QuantityState;
 import ru.yandex.practicum.dto.SetProductQuantityStateRequest;
 import ru.yandex.practicum.service.ProductService;
-import jakarta.validation.Valid;
 
 import java.util.UUID;
 

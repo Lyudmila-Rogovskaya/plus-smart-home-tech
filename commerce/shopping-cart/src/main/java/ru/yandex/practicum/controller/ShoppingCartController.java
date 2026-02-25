@@ -1,5 +1,6 @@
 package ru.yandex.practicum.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.ChangeProductQuantityRequest;
@@ -9,7 +10,6 @@ import ru.yandex.practicum.service.ShoppingCartService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/shopping-cart")
