@@ -25,7 +25,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShoppingCartService {
     private final CartRepository cartRepository;
-    private final CartMapper cartMapper;
     private final WarehouseClient warehouseClient;
 
     private Cart getActiveCartOrCreate(String username) {
@@ -43,14 +42,14 @@ public class ShoppingCartService {
 
     public ShoppingCartDto getCart(String username) {
         Cart cart = getActiveCartOrCreate(username);
-        return cartMapper.toDto(cart);
+        return CartMapper.toDto(cart);
     }
 
     @Transactional
     public ShoppingCartDto addProducts(String username, Map<UUID, Long> products) {
         Cart cart = getActiveCartOrCreate(username);
         try {
-            ShoppingCartDto dtoForCheck = cartMapper.toDto(cart);
+            ShoppingCartDto dtoForCheck = CartMapper.toDto(cart);
             dtoForCheck.getProducts().putAll(products);
             BookedProductsDto booked = warehouseClient.checkProductQuantityEnoughForShoppingCart(dtoForCheck);
             log.info("Warehouse check passed: weight={}, volume={}, fragile={}",
@@ -78,7 +77,7 @@ public class ShoppingCartService {
                     );
         }
         cartRepository.save(cart);
-        return cartMapper.toDto(cart);
+        return CartMapper.toDto(cart);
     }
 
     @Transactional
@@ -92,7 +91,7 @@ public class ShoppingCartService {
             throw new NoProductsInShoppingCartException("None of the specified products found in cart");
         }
         cartRepository.save(cart);
-        return cartMapper.toDto(cart);
+        return CartMapper.toDto(cart);
     }
 
     @Transactional
@@ -105,7 +104,7 @@ public class ShoppingCartService {
         item.setQuantity(request.getNewQuantity());
         cartRepository.save(cart);
 
-        ShoppingCartDto dtoForCheck = cartMapper.toDto(cart);
+        ShoppingCartDto dtoForCheck = CartMapper.toDto(cart);
         try {
             warehouseClient.checkProductQuantityEnoughForShoppingCart(dtoForCheck);
         } catch (feign.FeignException e) {
@@ -113,7 +112,7 @@ public class ShoppingCartService {
             throw new IllegalArgumentException("Not enough products in warehouse", e);
         }
 
-        return cartMapper.toDto(cart);
+        return CartMapper.toDto(cart);
     }
 
     @Transactional
