@@ -8,7 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class CartMapper {
+public final class CartMapper {
+
+    private CartMapper() {
+    }
 
     public static ShoppingCartDto toDto(Cart cart) {
         ShoppingCartDto dto = new ShoppingCartDto();
