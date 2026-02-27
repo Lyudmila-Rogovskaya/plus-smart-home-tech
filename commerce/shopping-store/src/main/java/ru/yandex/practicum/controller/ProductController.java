@@ -39,6 +39,9 @@ public class ProductController {
 
     @PostMapping
     public ProductDto updateProduct(@Valid @RequestBody ProductDto productDto) {
+        if (productDto.getProductId() == null) {
+            throw new IllegalArgumentException("Product id must be provided for update");
+        }
         return productService.updateProduct(productDto);
     }
 

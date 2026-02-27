@@ -25,6 +25,9 @@ public class ShoppingCartController {
     @PutMapping
     public ShoppingCartDto addProductToShoppingCart(@RequestParam String username,
                                                     @RequestBody Map<UUID, Long> products) {
+        if (products == null || products.isEmpty()) {
+            throw new IllegalArgumentException("Product map must not be empty");
+        }
         return cartService.addProducts(username, products);
     }
 
@@ -36,6 +39,9 @@ public class ShoppingCartController {
     @PostMapping("/remove")
     public ShoppingCartDto removeFromShoppingCart(@RequestParam String username,
                                                   @RequestBody List<UUID> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            throw new IllegalArgumentException("Product id list must not be empty");
+        }
         return cartService.removeProducts(username, productIds);
     }
 

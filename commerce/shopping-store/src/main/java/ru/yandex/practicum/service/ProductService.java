@@ -5,10 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.dto.ProductCategory;
-import ru.yandex.practicum.dto.ProductDto;
-import ru.yandex.practicum.dto.ProductState;
-import ru.yandex.practicum.dto.SetProductQuantityStateRequest;
+import ru.yandex.practicum.dto.*;
 import ru.yandex.practicum.entity.Product;
 import ru.yandex.practicum.exception.ProductNotFoundException;
 import ru.yandex.practicum.mapper.ProductMapper;
@@ -38,7 +35,7 @@ public class ProductService {
     public ProductDto createProduct(ProductDto productDto) {
         Product product = productMapper.toEntity(productDto);
         if (product.getQuantityState() == null) {
-            product.setQuantityState(ru.yandex.practicum.dto.QuantityState.ENDED);
+            product.setQuantityState(QuantityState.ENDED);
         }
         product = productRepository.save(product);
         return productMapper.toDto(product);
@@ -46,9 +43,6 @@ public class ProductService {
 
     @Transactional
     public ProductDto updateProduct(ProductDto productDto) {
-        if (productDto.getProductId() == null) {
-            throw new IllegalArgumentException("Product id must be provided for update");
-        }
         Product existing = productRepository.findById(productDto.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + productDto.getProductId()));
         existing.setProductName(productDto.getProductName());

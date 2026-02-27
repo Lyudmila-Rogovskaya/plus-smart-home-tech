@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.dto.*;
+import ru.yandex.practicum.entity.Dimension;
 import ru.yandex.practicum.entity.WarehouseProduct;
 import ru.yandex.practicum.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exception.ProductInShoppingCartLowQuantityInWarehouse;
@@ -13,9 +14,8 @@ import ru.yandex.practicum.feign.ShoppingStoreClient;
 import ru.yandex.practicum.mapper.WarehouseMapper;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -70,26 +70,48 @@ public class WarehouseService {
 
     @Transactional(readOnly = true)
     public BookedProductsDto checkAvailability(ShoppingCartDto cartDto) {
+        Map<UUID, Long> requestedProducts = cartDto.getProducts();
+        if (requestedProducts == null || requestedProducts.isEmpty()) {
+            throw new IllegalArgumentException("Shopping cart is empty");
+        }
+
+        Set<UUID> productIds = requestedProducts.keySet();
+        List<WarehouseProduct> products = warehouseRepository.findAllById(productIds);
+
+        if (products.size() != productIds.size()) {
+            Set<UUID> foundIds = products.stream()
+                    .map(WarehouseProduct::getProductId)
+                    .collect(Collectors.toSet());
+            productIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .findFirst()
+                    .ifPresent(missingId -> {
+                        throw new NoSpecifiedProductInWarehouseException("Product not found: " + missingId);
+                    });
+        }
+
         double totalWeight = 0.0;
         double totalVolume = 0.0;
         boolean fragile = false;
 
-        for (Map.Entry<UUID, Long> entry : cartDto.getProducts().entrySet()) {
-            UUID productId = entry.getKey();
-            Long requestedQuantity = entry.getValue();
-            WarehouseProduct product = warehouseRepository.findById(productId)
-                    .orElseThrow(() -> new NoSpecifiedProductInWarehouseException("Product not found: " + productId));
+        for (WarehouseProduct product : products) {
+            UUID productId = product.getProductId();
+            Long requestedQuantity = requestedProducts.get(productId);
+
             if (product.getQuantity() < requestedQuantity) {
                 throw new ProductInShoppingCartLowQuantityInWarehouse(
                         "Not enough quantity for product " + productId + ". Available: " + product.getQuantity());
             }
+
             if (product.getFragile()) {
                 fragile = true;
             }
-            double volume = product.getDimension().getWidth() *
-                    product.getDimension().getHeight() *
-                    product.getDimension().getDepth();
-            totalVolume += volume * requestedQuantity;
+
+            Dimension dim = product.getDimension();
+            if (dim != null) {
+                double volume = dim.getWidth() * dim.getHeight() * dim.getDepth();
+                totalVolume += volume * requestedQuantity;
+            }
             totalWeight += product.getWeight() * requestedQuantity;
         }
 
