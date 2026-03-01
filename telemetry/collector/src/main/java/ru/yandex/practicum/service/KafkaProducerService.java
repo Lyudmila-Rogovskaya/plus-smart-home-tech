@@ -6,8 +6,9 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.config.CollectorKafkaProperties;
+import ru.yandex.practicum.config.TopicType;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.mapper.AvroMapper;
@@ -23,19 +24,14 @@ import java.util.concurrent.TimeUnit;
 public class KafkaProducerService {
 
     private final Producer<String, SpecificRecordBase> kafkaProducer;
-
-    @Value("${kafka.topic.sensor}")
-    private String sensorsTopic;
-
-    @Value("${kafka.topic.hub}")
-    private String hubsTopic;
+    private final CollectorKafkaProperties properties;
 
     public void sendSensorEvent(SensorEventModel sensorEvent) {
         try {
             SensorEventAvro avroEvent = AvroMapper.toAvro(sensorEvent);
 
             ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                    sensorsTopic,
+                    properties.getProducer().getTopics().get(TopicType.SENSORS_EVENTS),
                     null,
                     sensorEvent.getTimestamp().toEpochMilli(),
                     sensorEvent.getId(),
@@ -58,7 +54,7 @@ public class KafkaProducerService {
             HubEventAvro avroEvent = AvroMapper.toAvro(hubEvent);
 
             ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-                    hubsTopic,
+                    properties.getProducer().getTopics().get(TopicType.HUBS_EVENTS),
                     null,
                     hubEvent.getTimestamp().toEpochMilli(),
                     hubEvent.getHubId(),
