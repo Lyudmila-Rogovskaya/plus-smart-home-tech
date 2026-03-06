@@ -1,5 +1,6 @@
 package ru.yandex.practicum.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -9,8 +10,9 @@ import ru.yandex.practicum.dto.PaymentDto;
 import ru.yandex.practicum.dto.PaymentState;
 import ru.yandex.practicum.dto.ProductDto;
 import ru.yandex.practicum.entity.Payment;
-import ru.yandex.practicum.exception.NoOrderFoundException;
+import ru.yandex.practicum.exception.ExternalServiceException;
 import ru.yandex.practicum.exception.NotEnoughInfoInOrderToCalculateException;
+import ru.yandex.practicum.exception.PaymentNotFoundException;
 import ru.yandex.practicum.feign.OrderClient;
 import ru.yandex.practicum.feign.ShoppingStoreClient;
 import ru.yandex.practicum.mapper.PaymentMapper;
@@ -85,25 +87,37 @@ public class PaymentService {
     @Transactional
     public void paymentSuccess(UUID paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new NoOrderFoundException("Payment not found with id: " + paymentId));
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
 
         payment.setStatus(PaymentState.SUCCESS);
         paymentRepository.save(payment);
 
-        orderClient.payment(payment.getOrderId());
-        log.info("Payment {} succeeded, order {} notified", paymentId, payment.getOrderId());
+        try {
+            orderClient.payment(payment.getOrderId());
+            log.info("Payment {} succeeded, order {} notified", paymentId, payment.getOrderId());
+        } catch (FeignException e) {
+            log.error("Failed to notify order service about successful payment: paymentId={}, orderId={}, status={}",
+                    paymentId, payment.getOrderId(), e.status(), e);
+            throw new ExternalServiceException("order", "Order service unavailable", e);
+        }
     }
 
     @Transactional
     public void paymentFailed(UUID paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new NoOrderFoundException("Payment not found with id: " + paymentId));
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
 
         payment.setStatus(PaymentState.FAILED);
         paymentRepository.save(payment);
 
-        orderClient.paymentFailed(payment.getOrderId());
-        log.info("Payment {} failed, order {} notified", paymentId, payment.getOrderId());
+        try {
+            orderClient.paymentFailed(payment.getOrderId());
+            log.info("Payment {} failed, order {} notified", paymentId, payment.getOrderId());
+        } catch (FeignException e) {
+            log.error("Failed to notify order service about failed payment: paymentId={}, orderId={}, status={}",
+                    paymentId, payment.getOrderId(), e.status(), e);
+            throw new ExternalServiceException("order", "Order service unavailable", e);
+        }
     }
 
 }

@@ -77,4 +77,9 @@ public class OrderController {
         return orderService.calculateDeliveryCost(orderId);
     }
 
+    @GetMapping("/{orderId}")
+    public OrderDto getOrder(@PathVariable UUID orderId) {
+        return orderService.getOrder(orderId);
+    }
+
 }

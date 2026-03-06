@@ -1,10 +1,7 @@
 package ru.yandex.practicum.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.dto.OrderDto;
 import ru.yandex.practicum.dto.ProductReturnRequest;
 
@@ -46,5 +43,8 @@ public interface OrderClient {
 
     @GetMapping
     List<OrderDto> getClientOrders(@RequestParam String username);
+
+    @GetMapping("/{orderId}")
+    OrderDto getOrder(@PathVariable("orderId") UUID orderId);
 
 }

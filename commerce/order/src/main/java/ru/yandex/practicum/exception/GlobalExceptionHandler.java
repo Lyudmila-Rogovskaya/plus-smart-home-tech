@@ -22,4 +22,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(statusProvide.getStatus()).body(error);
     }
 
+    @ExceptionHandler(OrderAssemblyException.class)
+    public ResponseEntity<ApiErrors> handleOrderAssembly(OrderAssemblyException exception) {
+        ApiErrors error = ApiErrors.builder()
+                .cause(exception.getCause())
+                .stackTrace(exception.getStackTrace())
+                .httpStatus(exception.getStatus())
+                .userMessage("Failed to assemble order: " + exception.getMessage())
+                .message(exception.getMessage())
+                .build();
+        return ResponseEntity.status(exception.getStatus()).body(error);
+    }
+
+    @ExceptionHandler(InvalidOrderStateException.class)
+    public ResponseEntity<ApiErrors> handleInvalidOrderState(InvalidOrderStateException exception) {
+        ApiErrors error = ApiErrors.builder()
+                .cause(exception.getCause())
+                .stackTrace(exception.getStackTrace())
+                .httpStatus(exception.getStatus())
+                .userMessage(exception.getMessage())
+                .message(exception.getMessage())
+                .build();
+        return ResponseEntity.status(exception.getStatus()).body(error);
+    }
+
 }

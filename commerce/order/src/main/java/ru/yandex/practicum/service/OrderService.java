@@ -8,8 +8,10 @@ import ru.yandex.practicum.dto.*;
 import ru.yandex.practicum.embedded.AddressEmbeddable;
 import ru.yandex.practicum.entity.Order;
 import ru.yandex.practicum.entity.OrderProduct;
+import ru.yandex.practicum.exception.InvalidOrderStateException;
 import ru.yandex.practicum.exception.NoOrderFoundException;
 import ru.yandex.practicum.exception.NotAuthorizedUserException;
+import ru.yandex.practicum.exception.OrderAssemblyException;
 import ru.yandex.practicum.feign.DeliveryClient;
 import ru.yandex.practicum.feign.PaymentClient;
 import ru.yandex.practicum.feign.WarehouseClient;
@@ -60,9 +62,12 @@ public class OrderService {
         BookedProductsDto booked;
         try {
             booked = warehouseClient.assemblyProductsForOrder(assemblyRequest);
+        } catch (feign.FeignException e) {
+            log.error("Feign error while assembling products: status={}, message={}", e.status(), e.getMessage(), e);
+            throw new OrderAssemblyException("Warehouse service error: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Failed to assemble products for order", e);
-            throw new IllegalArgumentException("No specified product in warehouse or insufficient quantity", e);
+            log.error("Unexpected error while assembling products", e);
+            throw new OrderAssemblyException("Unexpected error during product assembly", e);
         }
 
         Order order = new Order();
@@ -104,6 +109,14 @@ public class OrderService {
     @Transactional
     public OrderDto payment(UUID orderId) {
         Order order = findOrderById(orderId);
+
+        if (!canPay(order.getState())) {
+            throw new InvalidOrderStateException(
+                    String.format("Cannot pay order with state %s. Allowed states: NEW, ON_PAYMENT, ASSEMBLED, PAYMENT_FAILED",
+                            order.getState())
+            );
+        }
+
         OrderDto dto = orderMapper.toDto(order);
         PaymentDto payment = paymentClient.payment(dto);
         order.setPaymentId(payment.getPaymentId());
@@ -111,6 +124,13 @@ public class OrderService {
         order = orderRepository.save(order);
         log.info("Order {} paid, paymentId: {}", orderId, payment.getPaymentId());
         return orderMapper.toDto(order);
+    }
+
+    private boolean canPay(OrderState state) {
+        return state == OrderState.NEW
+                || state == OrderState.ON_PAYMENT
+                || state == OrderState.ASSEMBLED
+                || state == OrderState.PAYMENT_FAILED;
     }
 
     @Transactional
@@ -194,8 +214,12 @@ public class OrderService {
         OrderDto dto = orderMapper.toDto(order);
         Double total = paymentClient.getTotalCost(dto);
         order.setTotalPrice(total);
+
+        Double productCost = paymentClient.productCost(dto);
+        order.setProductPrice(productCost);
+
         order = orderRepository.save(order);
-        log.info("Calculated total cost for order {}: {}", orderId, total);
+        log.info("Calculated total cost for order {}: {}, product cost: {}", orderId, total, productCost);
         return orderMapper.toDto(order);
     }
 
@@ -207,6 +231,13 @@ public class OrderService {
         order.setDeliveryPrice(deliveryCost);
         order = orderRepository.save(order);
         log.info("Calculated delivery cost for order {}: {}", orderId, deliveryCost);
+        return orderMapper.toDto(order);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDto getOrder(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NoOrderFoundException("Order not found with id: " + orderId));
         return orderMapper.toDto(order);
     }
 
