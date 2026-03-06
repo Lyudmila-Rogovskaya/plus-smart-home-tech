@@ -13,6 +13,7 @@ spring:
           searchLocations:
             - classpath:/config/telemetry/
             - classpath:/config/commerce/
+            - classpath:/config/infra/gateway/
           addLabelLocations: false
 
 eureka:
